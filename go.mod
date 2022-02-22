@@ -22,7 +22,8 @@ require (
 	github.com/aws/aws-sdk-go v1.42.50
 	github.com/blushft/go-diagrams v0.0.0-20201006005127-c78c821223d9
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
-	github.com/cloudevents/sdk-go/v2 v2.1.0
+	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.8.0
+	github.com/cloudevents/sdk-go/v2 v2.8.0
 	github.com/colinmarc/hdfs v1.1.4-0.20180802165501-48eb8d6c34a9
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/emitter-io/go/v2 v2.0.9
@@ -70,11 +71,15 @@ require (
 	github.com/tidwall/sjson v1.2.4
 	github.com/xanzy/go-gitlab v0.54.4
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.29.0
+	go.opentelemetry.io/otel v1.4.1
+	go.opentelemetry.io/otel/exporters/otlp v0.20.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.4.1
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.20.0
 	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
 	google.golang.org/api v0.65.0
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.44.0
 	gopkg.in/jcmturner/gokrb5.v5 v5.3.0
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
@@ -88,12 +93,25 @@ require (
 )
 
 require (
+	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/hashicorp/go-hclog v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
+	go.opentelemetry.io/contrib v0.23.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.23.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.4.1 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.4.1 // indirect
+	go.opentelemetry.io/otel/internal/metric v0.23.0 // indirect
+	go.opentelemetry.io/otel/metric v0.23.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.4.1 // indirect
+	go.opentelemetry.io/otel/sdk/export/metric v0.20.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v0.20.0 // indirect
+	go.opentelemetry.io/otel/trace v1.4.1 // indirect
+	go.opentelemetry.io/proto/otlp v0.12.0 // indirect
 )
 
 require (
@@ -142,7 +160,7 @@ require (
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
-	github.com/go-logr/logr v0.4.0 // indirect
+	github.com/go-logr/logr v1.2.2
 	github.com/go-openapi/analysis v0.21.2 // indirect
 	github.com/go-openapi/errors v0.20.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
@@ -193,7 +211,6 @@ require (
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/lightstep/tracecontext.go v0.0.0-20181129014701-1757c391b1ac // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect

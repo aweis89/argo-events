@@ -12,6 +12,8 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.uber.org/zap"
 
 	"github.com/argoproj/argo-events/common"
@@ -51,6 +53,8 @@ import (
 	apicommon "github.com/argoproj/argo-events/pkg/apis/common"
 	eventbusv1alpha1 "github.com/argoproj/argo-events/pkg/apis/eventbus/v1alpha1"
 	"github.com/argoproj/argo-events/pkg/apis/eventsource/v1alpha1"
+	opentelemetry "github.com/cloudevents/sdk-go/observability/opentelemetry/v2/client"
+	opentelexporter "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 )
 
 // EventingServer is the server API for Eventing service.
@@ -348,6 +352,12 @@ func NewEventSourceAdaptor(eventSource *v1alpha1.EventSource, eventBusConfig *ev
 func (e *EventSourceAdaptor) Start(ctx context.Context) error {
 	log := logging.FromContext(ctx)
 
+	exp, err := opentelexporter.New(ctx)
+	if err != nil {
+		return errors.New("failed to start opentelemetry exporter")
+	}
+	defer exp.Shutdown(ctx)
+
 	recreateTypes := make(map[apicommon.EventSourceType]bool)
 	for _, esType := range apicommon.RecreateStrategyEventSources {
 		recreateTypes[esType] = true
@@ -480,6 +490,14 @@ func (e *EventSourceAdaptor) run(ctx context.Context, servers map[apicommon.Even
 						}
 
 						event := cloudevents.NewEvent()
+
+						// Start trace (attached to parent context when present)
+						ctx, span := otel.Tracer("").Start(ctx, "processing event source")
+						defer span.End()
+
+						// Propogate tracing context into event for further propogation to sensor
+						opentelemetry.InjectDistributedTracingExtension(ctx, event)
+
 						event.SetID(fmt.Sprintf("%x", uuid.New()))
 						event.SetType(string(s.GetEventSourceType()))
 						event.SetSource(s.GetEventSourceName())
@@ -488,6 +506,7 @@ func (e *EventSourceAdaptor) run(ctx context.Context, servers map[apicommon.Even
 						for _, opt := range opts {
 							err := opt(&event)
 							if err != nil {
+								otel.Handle(err)
 								return err
 							}
 						}
@@ -501,17 +520,22 @@ func (e *EventSourceAdaptor) run(ctx context.Context, servers map[apicommon.Even
 						}
 
 						if e.eventBusConn == nil || e.eventBusConn.IsClosed() {
-							return errors.New("failed to publish event, eventbus connection closed")
+							err := errors.New("failed to publish event, eventbus connection closed")
+							span.RecordError(err)
+							return err
 						}
 						if err = driver.Publish(e.eventBusConn, eventBody); err != nil {
 							logger.Errorw("failed to publish an event", zap.Error(err), zap.String(logging.LabelEventName,
 								s.GetEventName()), zap.Any(logging.LabelEventSourceType, s.GetEventSourceType()))
 							e.metrics.EventSentFailed(s.GetEventSourceName(), s.GetEventName())
+							span.SetStatus(codes.Error, "event publishing failed")
+							span.SpanContext
 							return err
 						}
 						logger.Infow("succeeded to publish an event", zap.String(logging.LabelEventName,
 							s.GetEventName()), zap.Any(logging.LabelEventSourceType, s.GetEventSourceType()), zap.String("eventID", event.ID()))
 						e.metrics.EventSent(s.GetEventSourceName(), s.GetEventName())
+						span.SetStatus(codes.Ok, "succeeded to publish an event")
 						return nil
 					})
 				}); err != nil {
@@ -554,7 +578,6 @@ func generateClientID(hostname string) string {
 }
 
 func filterEvent(data []byte, filter *v1alpha1.EventSourceFilter) (bool, error) {
-
 	dataMap := make(map[string]interface{})
 	err := json.Unmarshal(data, &dataMap)
 	if err != nil {

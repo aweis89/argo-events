@@ -35,9 +35,7 @@ import (
 	"github.com/argoproj/argo-events/pkg/apis/eventsource/v1alpha1"
 )
 
-var (
-	controller = webhook.NewController()
-)
+var controller = webhook.NewController()
 
 func init() {
 	go webhook.ProcessRouteStatus(controller)

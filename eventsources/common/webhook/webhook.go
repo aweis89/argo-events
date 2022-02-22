@@ -30,6 +30,7 @@ import (
 	eventsourcecommon "github.com/argoproj/argo-events/eventsources/common"
 	metrics "github.com/argoproj/argo-events/metrics"
 	"github.com/argoproj/argo-events/pkg/apis/eventsource/v1alpha1"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
 // NewController returns a webhook controller
@@ -80,6 +81,10 @@ func startServer(router Router, controller *Controller) {
 	route := router.GetRoute()
 	if _, ok := controller.ActiveServerHandlers[route.Context.Port]; !ok {
 		handler := mux.NewRouter()
+
+		// Adds opentelemetry middlware
+		handler.Use(otelmux.Middleware(route.EventSourceName))
+
 		server := &http.Server{
 			Addr:    fmt.Sprintf(":%s", route.Context.Port),
 			Handler: handler,
